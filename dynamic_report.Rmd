@@ -1,0 +1,142 @@
+---
+title: My dynamic report
+output: html_fragment
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=FALSE, message=FALSE, warning=FALSE, error=FALSE)
+
+```
+
+```{css}
+body {
+  font-family: "Segoe UI", Arial, sans-serif;
+  line-height: 1.6;
+  margin: 20px;
+  background-color: #EDBBE8;
+}
+
+h1 {
+  color: #6A1B9A;
+  font-weight: 700;
+}
+
+h2 {
+  color: #6A1B9A;
+  padding-bottom: 5px;
+}
+
+h3 {
+  color: #6A1B9A;
+}
+
+p {
+  font-size: 15px;
+}
+
+code {
+  background-color: #f5f5f5;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+pre {
+  background-color: #f5f5f5;
+  padding: 10px;
+  border-radius: 6px;
+}
+
+img {
+  border-radius: 10px;
+  margin-top: 10px;
+}
+
+```
+
+## How Advertisement Format and Content Influence Engagement and Purchase Likelihood
+
+This report analyses data collected from the Instagram Feed Advertisement Survey. 
+The dataset includes information on advertisement format, number of likes, advertisement type, and user ratings.
+
+The aim of this report is to investigate how different advertisement formats and types influence user engagement (likes) and purchase likelihood (ratings).  
+
+```{r}
+
+library(tidyverse)
+
+# Initializing csv file
+logged_data <- "https://docs.google.com/spreadsheets/d/e/2PACX-1vRM2QXdIMKz0F1hPqLYh-YDABzuBbsQsFOEUljj28b-5RC-s9_O9v5aLgpTCSo_ebaXH_0BsDBiH9tn/pub?output=csv"
+
+# Reading csv file, naming it "latest_data", and renaming variables/columns
+latest_data <- read_csv(logged_data) %>%
+  rename(timestamp = 1,
+         ad_format = 2,
+         ad_likes = 3,
+         ad_type = 4,
+         ad_rating = 5)
+
+# The name of the most frequent value for ad format
+latest_data$ad_format %>% 
+  table() %>%
+  which.max() %>%
+  names() -> most_common_ad_format
+
+# Splitting the ad type variable
+data_type_split <- latest_data %>% 
+  separate_rows(ad_type, sep = ",") %>%
+  mutate(ad_type = str_trim(ad_type)) #Trims whitespace after splitting and overwrites data in the ad type column
+
+# The name of the most frequent value for ad type (singular)
+data_type_split$ad_type %>% 
+  table() %>%
+  which.max() %>%
+  names() -> most_common_ad_type_singular
+
+```
+
+The average ad rating is **`r round(mean(latest_data$ad_rating, na.rm = TRUE), 1)`**.  
+The most common ad format is **`r most_common_ad_format`**.  
+The highest number of likes is **`r max(latest_data$ad_likes, na.rm = TRUE)`**.  
+The most common content type is **`r most_common_ad_type_singular`**.
+
+### Advertisement Format and Engagement
+
+This graph shows the average number of likes for each advertisement format. This helps identify which formats generate the most engagement.
+
+
+```{r}
+# Plot #3: Bar graph of average likes of different ad formats
+latest_data %>%
+  group_by(ad_format) %>%
+  summarise(avg_likes = mean(ad_likes)) %>%
+  ggplot() +
+  geom_col(aes(x = ad_format, y = avg_likes)) +
+  labs(title = "Do different ad formats influence engagement?",
+    subtitle = "Average number of likes by advertisement format from the Instagram Feed Advertisement Survey",
+    x = "Advertisement Format",
+    y = "Average Likes")
+```
+
+
+### Advertisement Type and Purchase Likelihood
+
+This graph shows the average rating for each advertisement type. This indicates how likely I am/others are to purchase based on what is being advertised.
+
+
+```{r, fig.width=12, fig.height=5}
+
+# Plot #4: Bar graph of average rating of different ad types
+data_type_split %>%
+  group_by(ad_type) %>%
+  summarise(avg_rating = mean(ad_rating)) %>%
+  ggplot() +
+  geom_col(aes(y = ad_type, x = avg_rating)) +
+  labs(title = "Does product type influence purchase likelihood?",
+    subtitle = "Average ratings by advertisement type from the Instagram Feed Advertisement Survey",
+    x = "Average Rating",
+    y = "Advertisement Type")
+
+```
+
+
+Overall, the results suggest that both advertisement format and content type play a role in influencing user engagement and purchase likelihood, although some categories perform significantly better than others.
